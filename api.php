@@ -1,27 +1,19 @@
 <?php
 
-define('IN_ECS', true);
-require(dirname(__FILE__) . '/includes/init.php');
-require_once(ROOT_PATH . 'includes/cls_api.php');
+require_once ('./submodules/php-mysqli-database-class/MysqliDb.php');
 
-//提供给手机客户端的接口
-$action = $_REQUEST['action'];
-
-$api = new api();
-
-$res = array();
-if($action){
-    if (method_exists($api, $action)) {
-        header('Content-Type: application/json');
-        $res = $api->$action();
-    }else{
-        $res['error'] = 1;
-        $res['msg'] = 'function ' . $action . ' doesn\'t exist.';
-    }
-}else{
-    $res['error'] = 1;
-    $res['msg'] = 'invalid parameter.';
+$db = new MysqliDb ('localhost:3306', 'root', 'Dsh12345', 'trafficpolice');
+$ip = $_SERVER['SERVER_ADDR'];
+if ($ip == '112.124.98.9') {
+	$db = new MysqliDb ('localhost:3306', 'root', 'Dsh12345', 'trafficpolice');
 }
-echo json_encode($res);
+
+$users = $db->get('user');
+var_dump($users);
+if ($db->count > 0) {
+    foreach ($users as $user) { 
+        print_r ($user);
+    }
+}
 
 ?>

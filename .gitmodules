@@ -1,0 +1,3 @@
+[submodule "submodules/php-mysqli-database-class"]
+	path = submodules/php-mysqli-database-class
+	url = https://github.com/joshcam/PHP-MySQLi-Database-Class.git
