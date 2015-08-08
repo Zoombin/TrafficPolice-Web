@@ -6,7 +6,7 @@ require_once ('./submodules/php-mysqli-database-class/MysqliDb.php');
 require_once('./includes/cls_api.php');
 
 // 初始化数据库类
-$db = new MysqliDb ('localhost', 'root', '', 'trafficpolice');
+$db = new MysqliDb ('localhost', 'root', 'Dsh12345', 'trafficpolice');
 $ip = $_SERVER['SERVER_ADDR'];
 if ($ip == '112.124.98.9') {
 	$db = new MysqliDb ('localhost', 'root', 'Dsh12345', 'trafficpolice');
@@ -29,9 +29,9 @@ if($action){
     $res['error'] = 1;
     $res['msg'] = 'invalid parameter.';
 }
-print('<pre>');
-print_r($res);
-print('</pre>');
+// print('<pre>');
+// print_r($res);
+// print('</pre>');
 header('Content-Type: application/json;charset=utf-8');
 echo json_encode($res);
 
