@@ -287,6 +287,21 @@ class api {
         return $this->res;
     }
 
+    function delUser(){
+        global $db;
+        $userid = $_REQUEST['userid'];
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
+        $db->where ('user_id', $userid)->delete('users');
+        $this->res['msg'] = '用户删除成功';
+
+        return $this->res;
+    }
+
     /**
      * 验证用户输入的验证码
      *
