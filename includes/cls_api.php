@@ -15,7 +15,7 @@ class api {
     var $templateId = '11181';
     var $appTitle = '交警来了';
     var $msgExpireTime = 10;   // 验证码过期时间, 分钟
-    var $msgTotal = 4;   // 24小时内可申请多少次验证码
+    var $msgTotal = 400;   // 24小时内可申请多少次验证码
     /* 短信配置项 end */
 
     /**
