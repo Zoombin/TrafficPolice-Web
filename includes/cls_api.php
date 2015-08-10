@@ -9,7 +9,7 @@ class api {
     /* 短信配置项 start */
     var $msgApiInfo = array(
         'accountsid' => '2fe9bed94650b2455d45e5053e3a687a',
-        'token' => ''
+        'token' => '3a1e0c94d52f79df733ec4c2c40cbf88'
         );
     var $appId = 'f68832e20d7c41c981a3f479d45dd6c3';
     var $templateId = '11181';
@@ -60,12 +60,20 @@ class api {
         return $this->res;
     }
 
+    /**
+     * 用户注册
+     * @method regUser
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-10T12:03:57+0800
+     */
     function regUser(){
         global $db;
         $username = $_REQUEST['username'];
         $username = trim($username);
         $password = $_REQUEST['password'];
-        $phone = $_REQUEST['phone'];
+        $nickname = $_REQUEST['nickname'];
         $captcha = $_REQUEST['captcha'];
 
         if(!$username){
@@ -82,7 +90,7 @@ class api {
         }
         //valid captcha
         $sMsgType = 'regUser';
-        $isCaptcha = $this->_validMobileCaptcha($phone, $sMsgType, $captcha);
+        $isCaptcha = $this->_validMobileCaptcha($username, $sMsgType, $captcha);
         if($isCaptcha['error']){
             $this->res['error'] = 1;
             $this->res['msg'] = $isCaptcha['msg'];
@@ -92,12 +100,14 @@ class api {
         $aNewUser = array (
             'user_name' => $username,
             'password' => $password,
-            'phone' => $phone,
+            'nickname' => $nickname,
             'created_date' => $db->now(),
         );
         $id = $db->insert ('users', $aNewUser);
         if ($id) {
             $this->res['data'] = $id;
+            $this->res['error'] = 0;
+            $this->res['msg'] = '用户创建成功';
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '用户创建失败';
@@ -105,19 +115,36 @@ class api {
         return $this->res;
     }
 
+    /**
+     * 判断用户是否已经存在
+     * @method isUserExist
+     * @param  string    $username
+     * @return boolean
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-10T12:04:18+0800
+     */
     function isUserExist($username){
         global $db;
         $db->where('user_name',$username)->get('users');
         return $db->count;
     }
 
+    /**
+     * 更新用户信息
+     * @method updateUser
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-10T12:04:50+0800
+     */
     function updateUser(){
         global $db;
         $userid = $_REQUEST['userid'];
         $username = $_REQUEST['username'];
         $username = trim($username);
         $password = $_REQUEST['password'];
-        $phone = $_REQUEST['phone'];
+        $nickname = $_REQUEST['nickname'];
 
         $aUpateUser = array();
 
@@ -143,7 +170,7 @@ class api {
         }
 
         $aUpateUser['password'] = $password;
-        $aUpateUser['phone'] = $phone;
+        $aUpateUser['nickname'] = $nickname;
         $aUpateUser['updated_date'] = $db->now();
         
         $db->where ('user_id', $userid);
@@ -163,7 +190,7 @@ class api {
      * @method getRegCaptcha
      * @access public
      * 
-     * @param   string  $_REQUEST['phone']     手机号码
+     * @param   string  $_REQUEST['username']     手机号码
      * 
      * @return array
      *
@@ -173,7 +200,7 @@ class api {
     function getRegCaptcha(){
         global $db;
         $sMsgType = 'regUser';
-        $phone = $_REQUEST['phone'];
+        $phone = $_REQUEST['username'];
         if(!$phone){// TODO... valid phone number
             $this->res['error'] = 1;
             $this->res['msg'] = '手机号不存在';
@@ -195,7 +222,8 @@ class api {
         //call api
         require_once('Ucpaas.class.php');
         $captcha = rand(100000,999999);
-        $aParam = array($this->appTitle, $captcha, $this->msgExpireTime);
+        // $aParam = array($this->appTitle, $captcha, $this->msgExpireTime);
+        $aParam = array($captcha, $this->msgExpireTime);
         $param = implode(',', $aParam);
         $ucpass = new Ucpaas($this->msgApiInfo);
         // $param = "交警来了,1256,3";
@@ -231,6 +259,31 @@ class api {
             );
         $id = $db->insert ('mobile_message', $aNewMsg);
         
+        return $this->res;
+    }
+
+    /**
+     * 用户登陆
+     * @method loginUser
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-10T12:03:32+0800
+     */
+    function loginUser(){
+        global $db;
+        $username = $_REQUEST['username'];
+        $username = trim($username);
+        $password = $_REQUEST['password'];
+        $db->where("user_name = '$username' AND password='$password'")->get('users');
+        if($db->count){
+            $this->res['error'] = 0;
+            $this->res['msg'] = '登陆成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户名或密码错误';
+        }
+
         return $this->res;
     }
 
