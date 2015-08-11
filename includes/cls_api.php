@@ -18,6 +18,12 @@ class api {
     var $msgTotal = 400;   // 24小时内可申请多少次验证码
     /* 短信配置项 end */
 
+    /* 坐标搜索配置项 start */
+    var $searchRadius = 5000;   // 搜索半径, 单位: 米
+    var $searchTime = 48;       // 搜索多少小时以内的记录, 单位: 小时
+    /* 坐标搜索配置项 end */
+
+
     /**
      * data | array | mixed data
      * total| int   | total amount of data
@@ -74,7 +80,7 @@ class api {
         $username = trim($username);
         $password = $_REQUEST['password'];
         $nickname = $_REQUEST['nickname'];
-        $captcha = $_REQUEST['captcha'];
+        $captcha  = $_REQUEST['captcha'];
 
         if(!$username){
             $this->res['error'] = 1;
@@ -141,7 +147,7 @@ class api {
      */
     function updateUser(){
         global $db;
-        $userid = $_REQUEST['userid'];
+        $userid   = $_REQUEST['userid'];
         $username = $_REQUEST['username'];
         $username = trim($username);
         $password = $_REQUEST['password'];
@@ -291,6 +297,14 @@ class api {
         return $this->res;
     }
 
+    /**
+     *  用户删除
+     * @method delUser
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-11T16:03:39+0800
+     */
     function delUser(){
         global $db;
         $userid = $_REQUEST['userid'];
@@ -357,6 +371,135 @@ class api {
             }
         }
         return $array;
-    } 
+    }
+
+    /**
+     * 标记停车
+     * @method markPark
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-11T16:26:37+0800
+     */
+    function markPark(){
+        global $db;
+        $userid  = $_REQUEST['userid'];
+        $long    = $_REQUEST['long'];
+        $lat     = $_REQUEST['lat'];
+        $imgurl  = $_REQUEST['imgurl'];
+        $content = $_REQUEST['content'];
+
+        $aNewRec = array (
+            'user_id' => $userid,
+            'longitude' => $long,
+            'latitude' => $lat,
+            'image_url' => $imgurl,
+            'content' => $content,
+            'created_date' => $db->now(),
+        );
+        $id = $db->insert ('mark_park', $aNewRec);
+        $aRes = array('id' => $id);
+        if ($id) {
+            $this->res['data'] = $aRes;
+            $this->res['error'] = 0;
+            $this->res['msg'] = '保存成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '保存失败';
+        }
+        return $this->res;
+
+    }
+
+    /**
+     * 标记发现交警的地点, 并向附近用户推送提示信息
+     * @method markPolice
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-11T16:30:19+0800
+     */
+    function markPolice(){
+        global $db;
+        $userid  = $_REQUEST['userid'];
+        $long    = $_REQUEST['long'];
+        $lat     = $_REQUEST['lat'];
+        $imgurl  = $_REQUEST['imgurl'];
+        $content = $_REQUEST['content'];
+
+        $aNewRec = array (
+            'user_id' => $userid,
+            'longitude' => $long,
+            'latitude' => $lat,
+            'image_url' => $imgurl,
+            'content' => $content,
+            'created_date' => $db->now(),
+        );
+        $id = $db->insert ('mark_trafficpolice', $aNewRec);
+        $aRes = array('id' => $id);
+        if ($id) {
+            $this->res['data'] = $aRes;
+            $this->res['error'] = 0;
+            $this->res['msg'] = '保存成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '保存失败';
+        }
+        return $this->res;
+    }
+
+    function getNearbyUsers(){
+        $long    = $_REQUEST['long'];
+        $lat     = $_REQUEST['lat'];
+
+        $aUsers = $this->_getNearbyUsers($long, $lat);
+
+        $this->res['data'] = $aUsers;
+        $this->res['total'] = count($aUsers);
+        return $this->res;
+    }
+    /**
+     * 获得当前坐标(经纬度)附近的用户
+     * @method _getNearbyUsers
+     * @param  float |  $long | 经度
+     * @param  float |  $lat  | 纬度
+     * @return array
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-11T16:34:24+0800
+     */
+    private function _getNearbyUsers($long, $lat){
+        global $db;
+        $range = $this->_getRange($long, $lat);
+        $searchTime = $this->searchTime;
+        $sql = "SELECT * FROM `mark_park` WHERE longitude >= $range[minLong] AND longitude <= $range[maxLong] AND latitude >= $range[minLat] AND latitude <= $range[maxLat] AND created_date >= DATE_SUB(NOW(),INTERVAL $searchTime hour) ORDER BY created_date DESC";
+        
+        $aTotal = $db->rawQuery($sql);
+        return $aTotal;
+    }
+    /* 获得当前坐标附近的最大和最小坐标 */
+    private function _getRange($lon, $lat){
+        $raidus = $this->searchRadius;
+        //计算纬度
+        $degree = (24901 * 1609) / 360.0;
+        $dpmLat = 1 / $degree; 
+        $radiusLat = $dpmLat * $raidus;
+        $minLat = $lat - $radiusLat; //得到最小纬度
+        $maxLat = $lat + $radiusLat; //得到最大纬度     
+        //计算经度
+        $mpdLng = $degree * cos($lat * (PI / 180));
+        $dpmLng = 1 / $mpdLng;
+        $radiusLng = $dpmLng * $raidus;
+        $minLng = $lon - $radiusLng;  //得到最小经度
+        $maxLng = $lon + $radiusLng;  //得到最大经度
+        //范围
+        $range = array(
+            'minLat' => $minLat,
+            'maxLat' => $maxLat,
+            'minLong' => $minLng,
+            'maxLong' => $maxLng
+        );
+        return $range;
+    }
 
 }
