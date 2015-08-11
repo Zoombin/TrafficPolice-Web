@@ -104,8 +104,9 @@ class api {
             'created_date' => $db->now(),
         );
         $id = $db->insert ('users', $aNewUser);
+        $aRes = array('userid' => $id);
         if ($id) {
-            $this->res['data'] = $id;
+            $this->res['data'] = $aRes;
             $this->res['error'] = 0;
             $this->res['msg'] = '用户创建成功';
         }else{
@@ -275,8 +276,11 @@ class api {
         $username = $_REQUEST['username'];
         $username = trim($username);
         $password = $_REQUEST['password'];
-        $db->where("user_name = '$username' AND password='$password'")->get('users');
+        $aUsers = $db->where("user_name = '$username' AND password='$password'")->get('users');
+
         if($db->count){
+            $aRes = array('userid' => $aUsers[0]['user_id']);
+            $this->res['data'] = $aRes;
             $this->res['error'] = 0;
             $this->res['msg'] = '登陆成功';
         }else{
