@@ -12,14 +12,15 @@ class api {
         'token' => '3a1e0c94d52f79df733ec4c2c40cbf88'
         );
     var $appId = 'f68832e20d7c41c981a3f479d45dd6c3';
-    var $templateId = '11181';
-    var $appTitle = '交警来了';
+    var $templateIdRegister = '11181';  //注册时验证码, 模板id
+    var $templateIdNoti = '11365';      //发布交警来了, 模板id
+    // var $appTitle = '交警来了';
     var $msgExpireTime = 10;   // 验证码过期时间, 分钟
     var $msgTotal = 400;   // 24小时内可申请多少次验证码
     /* 短信配置项 end */
 
     /* 坐标搜索配置项 start */
-    var $searchRadius = 5000;   // 搜索半径, 单位: 米
+    var $searchRadius = 5;   // 搜索半径, 单位: 千米
     var $searchTime = 48;       // 搜索多少小时以内的记录, 单位: 小时
     /* 坐标搜索配置项 end */
 
@@ -226,46 +227,18 @@ class api {
             return $this->res;
         }
 
-        //call api
-        require_once('Ucpaas.class.php');
+        //推送短信
         $captcha = rand(100000,999999);
-        // $aParam = array($this->appTitle, $captcha, $this->msgExpireTime);
+        //您的验证码为{1}，请于{2}分钟内正确输入验证码
         $aParam = array($captcha, $this->msgExpireTime);
         $param = implode(',', $aParam);
-        $ucpass = new Ucpaas($this->msgApiInfo);
-        // $param = "交警来了,1256,3";
-        //您注册{1}的验证码为{2}，请于{3}分钟内正确输入验证码
-
-        $resMsg = $ucpass->templateSMS($this->appId,$phone,$this->templateId,$param);
-        $oResMsg = json_decode($resMsg);
-        $aMsgRes = $this->_objectToArray($oResMsg);
-
-        if($aMsgRes['resp']['respCode'] != '000000'){
-            $this->res['error'] = $aMsgRes['resp']['respCode'];
-            $this->res['msg'] = '短信发送失败';
-        }else{
-            $this->res['error'] = 0;
-            $this->res['msg'] = '短信发送成功';
-        }
+        $resMsg = $this->_sendMsg($phone, $this->templateIdRegister, $param, $sMsgType, $captcha);
+        $this->res['error'] = $resMsg['error'];
+        $this->res['msg'] = $resMsg['msg'];
+        
         if($cnt >= 1)
             $this->res['msg'] = '该手机还可获取'.($this->msgTotal-$cnt-1).'次验证码，请尽快完成验证。';
-
-        //save data to DB
-        $aNewMsg = array(
-            'msg_to' => $phone,
-            'msg_type' => $sMsgType,
-            'msg_content' => $captcha,
-            'msg_content' => $captcha,
-            'msg_param' => $param,
-            'msg_id' => $aMsgRes['resp']['templateSMS']['smsId'],
-            'msg_created_date' => $aMsgRes['resp']['templateSMS']['createDate'],
-            'msg_error_info' => $aMsgRes['resp']['respCode'],
-            // 'msg_failure_count' => $aMsgRes['resp']['failure'],
-            'msg_response_json' => $resMsg,
-            'created_date' => $db->now(),
-            );
-        $id = $db->insert ('mobile_message', $aNewMsg);
-        
+                
         return $this->res;
     }
 
@@ -360,6 +333,44 @@ class api {
         return $result;
     }
 
+    private function _sendMsg($phone, $templateId, $param, $sMsgType, $sMsgContent){
+        //call api
+        require_once('Ucpaas.class.php');
+        $ucpass = new Ucpaas($this->msgApiInfo);
+
+        $resMsg = $ucpass->templateSMS($this->appId,$phone,$templateId,$param);
+        $oResMsg = json_decode($resMsg);
+        $aMsgRes = $this->_objectToArray($oResMsg);
+
+        $aRes = array();
+        $aRes['rawResponse'] = $resMsg;
+        if($aMsgRes['resp']['respCode'] != '000000'){
+            $aRes['error'] = $aMsgRes['resp']['respCode'];
+            $aRes['msg'] = '短信发送失败';
+        }else{
+            $aRes['error'] = 0;
+            $aRes['msg'] = '短信发送成功';
+        }
+
+        global $db;
+        //save data to DB
+        $aNewMsg = array(
+            'msg_to' => $phone,
+            'msg_type' => $sMsgType,
+            'msg_content' => $sMsgContent,
+            'msg_param' => $param,
+            'msg_id' => $aMsgRes['resp']['templateSMS']['smsId'],
+            'msg_created_date' => $aMsgRes['resp']['templateSMS']['createDate'],
+            'msg_error_info' => $aMsgRes['resp']['respCode'],
+            // 'msg_failure_count' => $aMsgRes['resp']['failure'],
+            'msg_response_json' => $resMsg,
+            'created_date' => $db->now(),
+            );
+        $id = $db->insert ('mobile_message', $aNewMsg);
+
+        return $aRes;
+    }
+
 
     private function _objectToArray($array) {  
         if(is_object($array)){
@@ -436,6 +447,30 @@ class api {
             'created_date' => $db->now(),
         );
         $id = $db->insert ('mark_trafficpolice', $aNewRec);
+        
+        //获得附近停车用户
+        $aUsers = $this->_getNearbyUsers($long, $lat);
+        
+        if(count($aUsers)){
+            $sMsgType = 'markPolice';
+            //向用户推送提醒消息
+            foreach ($aUsers as $user) {
+                $aParam = array($this->searchRadius);
+                $param = implode(',', $aParam);
+                $resMsg = $this->_sendMsg($user['user_name'], $this->templateIdNoti, $param, $sMsgType, $this->searchRadius);
+                
+                if($resMsg['error'] == 0){
+                    //发送短信成功, 标记用户收到短信
+                    $aNewLog = array(
+                        'mt_id' => $id,
+                        'user_id' => $user['user_id'],
+                        'created_date' => $db->now(),
+                        );
+                    $db->insert('mark_trafficpolice_log', $aNewLog);
+                }
+            }
+        }
+
         $aRes = array('id' => $id);
         if ($id) {
             $this->res['data'] = $aRes;
@@ -472,14 +507,14 @@ class api {
         global $db;
         $range = $this->_getRange($long, $lat);
         $searchTime = $this->searchTime;
-        $sql = "SELECT * FROM `mark_park` WHERE longitude >= $range[minLong] AND longitude <= $range[maxLong] AND latitude >= $range[minLat] AND latitude <= $range[maxLat] AND created_date >= DATE_SUB(NOW(),INTERVAL $searchTime hour) ORDER BY created_date DESC";
-        
+        $sql = "SELECT mp.*,u.nickname,u.user_name FROM `mark_park` mp LEFT JOIN users u ON u.user_id=mp.user_id WHERE mp.longitude >= $range[minLong] AND mp.longitude <= $range[maxLong] AND mp.latitude >= $range[minLat] AND mp.latitude <= $range[maxLat] AND mp.created_date >= DATE_SUB(NOW(),INTERVAL $searchTime hour) ORDER BY mp.created_date DESC";
+
         $aTotal = $db->rawQuery($sql);
         return $aTotal;
     }
     /* 获得当前坐标附近的最大和最小坐标 */
     private function _getRange($lon, $lat){
-        $raidus = $this->searchRadius;
+        $raidus = $this->searchRadius * 1000;
         //计算纬度
         $degree = (24901 * 1609) / 360.0;
         $dpmLat = 1 / $degree; 
