@@ -62,8 +62,6 @@ class api {
         $this->res['data'] = $arr;
         $this->res['total'] = $db->totalCount;
 
-        
-
         return $this->res;
     }
 
@@ -154,7 +152,7 @@ class api {
         $password = $_REQUEST['password'];
         $nickname = $_REQUEST['nickname'];
 
-        $aUpateUser = array();
+        $aUpdateUser = array();
 
         if(!$userid){
             $this->res['error'] = 1;
@@ -173,16 +171,16 @@ class api {
                 $this->res['msg'] = '用户名已经存在';
                 return $this->res;
             }else{
-                $aUpateUser['user_name'] = $username;
+                $aUpdateUser['user_name'] = $username;
             }
         }
 
-        $aUpateUser['password'] = $password;
-        $aUpateUser['nickname'] = $nickname;
-        $aUpateUser['updated_date'] = $db->now();
+        $aUpdateUser['password'] = $password;
+        $aUpdateUser['nickname'] = $nickname;
+        $aUpdateUser['updated_date'] = $db->now();
         
         $db->where ('user_id', $userid);
-        $id = $db->update ('users', $aUpateUser);
+        $id = $db->update ('users', $aUpdateUser);
         if ($db->count) {
             $this->res['msg'] = '用户更新成功';
         }else{
@@ -535,6 +533,58 @@ class api {
             'maxLong' => $maxLng
         );
         return $range;
+    }
+
+    /**
+     * 当前用户收到的推送列表
+     * @method getUserNotiList
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-13T13:25:41+0800
+     */
+    function getUserNotiList(){
+        global $db;
+        $userid = $_REQUEST['userid'];
+
+        $sql = "SELECT mtl.id,mtl.user_id,mt.latitude,mt.longitude,mt.image_url,mt.content,mtl.feedback,mtl.feedback_content,mtl.created_date,mtl.pay_success,mtl.pay_money FROM `mark_trafficpolice_log` mtl LEFT JOIN mark_trafficpolice mt ON mtl.mt_id=mt.id WHERE mtl.user_id='$userid' ORDER BY mtl.created_date DESC";
+
+        $aList = $db->withTotalCount()->rawQuery($sql);
+
+        $this->res['data'] = $aList;
+        $this->res['total'] = $db->totalCount;
+
+        return $this->res;
+    }
+
+    /**
+     * 在推送列表中, 用户可以选择一条进行评论
+     * @method setNotiComment
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-13T13:35:33+0800
+     */
+    function setNotiComment(){
+        global $db;
+        $id              = $_REQUEST['id'];
+        $feedback        = $_REQUEST['feedback'];
+        $feedbackcontent = $_REQUEST['feedbackcontent'];
+
+        $aUpdate = array(
+            'feedback' => $feedback,
+            'feedback_content' => $feedbackcontent,
+            );
+        
+        $db->where ('id', $id);
+        $id = $db->update ('mark_trafficpolice_log', $aUpdate);
+        if ($db->count) {
+            $this->res['msg'] = '添加评论成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '添加评论失败';
+        }
+        return $this->res;
     }
 
 }
