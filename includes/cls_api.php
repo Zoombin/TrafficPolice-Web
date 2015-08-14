@@ -397,6 +397,7 @@ class api {
         $lat     = $_REQUEST['lat'];
         $imgurl  = $_REQUEST['imgurl'];
         $content = $_REQUEST['content'];
+        $jpushid = $_REQUEST['jpushid'];
 
         $aNewRec = array (
             'user_id' => $userid,
@@ -404,6 +405,7 @@ class api {
             'latitude' => $lat,
             'image_url' => $imgurl,
             'content' => $content,
+            'jpushid' => $jpushid,
             'created_date' => $db->now(),
         );
         $id = $db->insert ('mark_park', $aNewRec);
