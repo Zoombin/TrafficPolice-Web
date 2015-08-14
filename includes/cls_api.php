@@ -4,6 +4,13 @@
  * api 公用类
  * 
  */
+require_once 'vendor/autoload.php';
+
+use JPush\Model as M;
+use JPush\JPushClient;
+use JPush\Exception\APIConnectionException;
+use JPush\Exception\APIRequestException;
+
 class api {
 
     /* 短信配置项 start */
@@ -18,6 +25,13 @@ class api {
     var $msgExpireTime = 10;   // 验证码过期时间, 分钟
     var $msgTotal = 400;   // 24小时内可申请多少次验证码
     /* 短信配置项 end */
+
+    /* jpush配置项 start */
+    public $appKey = '177710617edd09da6b1c9c61';
+    public $masterSecret = 'e28e0aba92dc59df05df345a';
+    public $alert = "JPush Test - alert";
+    public $title = "JPUsh Test - title";
+    /* jpush配置项 end */
 
     /* 坐标搜索配置项 start */
     var $searchRadius = 5;   // 搜索半径, 单位: 千米
@@ -587,6 +601,16 @@ class api {
             $this->res['msg'] = '添加评论失败';
         }
         return $this->res;
+    }
+
+    function jpush(){
+        $client = new JPushClient($this->appKey, $this->masterSecret);
+        $response = $client->push()->setPlatform(M\all)
+            ->setAudience(M\all)
+            ->setNotification(M\notification($this->alert))
+            ->send();
+
+        $this->assertTrue($response->isOk === true);
     }
 
 }
