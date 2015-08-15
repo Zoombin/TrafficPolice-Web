@@ -423,6 +423,12 @@ class api {
         $content = $_REQUEST['content'];
         $address = $_REQUEST['address'];
 
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
         $aNewRec = array (
             'user_id' => $userid,
             'longitude' => $long,
@@ -447,6 +453,65 @@ class api {
     }
 
     /**
+     * 获得当前用户的停车信息, 是否在停车中
+     * @method getPark
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-15T16:51:29+0800
+     */
+    function getPark(){
+        global $db;
+        $userid  = $_REQUEST['userid'];
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
+        $sql = "SELECT * FROM `mark_park` WHERE user_id = '$userid' ORDER BY created_date DESC LIMIT 1";
+        $aInfo = $db->rawQuery($sql);
+        if($aInfo[0])
+            $this->res['data'] = $aInfo[0];
+        return $this->res;
+    }
+
+    /**
+     * 取消停车
+     * @method cancelPark
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-15T16:51:47+0800
+     */
+    function cancelPark(){
+        global $db;
+        $userid  = $_REQUEST['userid'];
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
+        $aUpdate = array(
+        'isactive' => 0,
+        );
+    
+        $db->where ('user_id', $userid);
+        $id = $db->update ('mark_park', $aUpdate);
+
+        if ($id) {
+            $this->res['error'] = 0;
+            $this->res['msg'] = '取消停车成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '取消停车失败';
+        }
+
+        return $this->res;
+    }
+
+    /**
      * 标记发现交警的地点, 并向附近用户推送提示信息
      * @method markPolice
      * @return [type]
@@ -462,6 +527,12 @@ class api {
         $imgurl  = $_REQUEST['imgurl'];
         $content = $_REQUEST['content'];
         $address = $_REQUEST['address'];
+
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
 
         $aNewRec = array (
             'user_id' => $userid,
