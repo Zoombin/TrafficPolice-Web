@@ -4,7 +4,8 @@
  * api 公用类
  * 
  */
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/vendor' . '/autoload.php';
+
 
 use JPush\Model as M;
 use JPush\JPushClient;
