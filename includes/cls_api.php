@@ -171,6 +171,7 @@ class api {
         $username = trim($username);
         $password = $_REQUEST['password'];
         $nickname = $_REQUEST['nickname'];
+        $avatarurl = $_REQUEST['avatarurl'];
 
         $aUpdateUser = array();
 
@@ -198,6 +199,8 @@ class api {
         $aUpdateUser['password'] = $password;
         $aUpdateUser['nickname'] = $nickname;
         $aUpdateUser['updated_date'] = $db->now();
+        if($avatarurl)
+            $aUpdateUser['avatar_url'] = $avatarurl;
         
         $db->where ('user_id', $userid);
         $id = $db->update ('users', $aUpdateUser);
