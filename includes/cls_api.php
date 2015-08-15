@@ -421,6 +421,7 @@ class api {
         $lat     = $_REQUEST['lat'];
         $imgurl  = $_REQUEST['imgurl'];
         $content = $_REQUEST['content'];
+        $address = $_REQUEST['address'];
 
         $aNewRec = array (
             'user_id' => $userid,
@@ -428,6 +429,7 @@ class api {
             'latitude' => $lat,
             'image_url' => $imgurl,
             'content' => $content,
+            'address' => $address,
             'created_date' => $db->now(),
         );
         $id = $db->insert ('mark_park', $aNewRec);
@@ -459,6 +461,7 @@ class api {
         $lat     = $_REQUEST['lat'];
         $imgurl  = $_REQUEST['imgurl'];
         $content = $_REQUEST['content'];
+        $address = $_REQUEST['address'];
 
         $aNewRec = array (
             'user_id' => $userid,
@@ -466,6 +469,7 @@ class api {
             'latitude' => $lat,
             'image_url' => $imgurl,
             'content' => $content,
+            'address' => $address,
             'created_date' => $db->now(),
         );
         $id = $db->insert ('mark_trafficpolice', $aNewRec);
