@@ -270,7 +270,11 @@ class api {
         $aUsers = $db->where("user_name = '$username' AND password='$password'")->get('users');
 
         if($db->count){
-            $aRes = array('userid' => $aUsers[0]['user_id']);
+            $aRes = array(
+                'userid' => $aUsers[0]['user_id'],
+                'username' => $aUsers[0]['user_name'],
+                'nickname' => $aUsers[0]['nickname'],
+                );
             $this->res['data'] = $aRes;
             $this->res['error'] = 0;
             $this->res['msg'] = '登陆成功';
@@ -411,7 +415,6 @@ class api {
         $lat     = $_REQUEST['lat'];
         $imgurl  = $_REQUEST['imgurl'];
         $content = $_REQUEST['content'];
-        $jpushid = $_REQUEST['jpushid'];
 
         $aNewRec = array (
             'user_id' => $userid,
@@ -419,7 +422,6 @@ class api {
             'latitude' => $lat,
             'image_url' => $imgurl,
             'content' => $content,
-            'jpushid' => $jpushid,
             'created_date' => $db->now(),
         );
         $id = $db->insert ('mark_park', $aNewRec);
@@ -465,24 +467,58 @@ class api {
         //获得附近停车用户
         $aUsers = $this->_getNearbyUsers($long, $lat);
         
+        $sPushMsg = '您当前' . $this->searchRadius . '千米的范围内有交警，请注意！';
         if(count($aUsers)){
             $sMsgType = 'markPolice';
-            //向用户推送提醒消息
+            //去除重复用户
+            $aPushAlias = array();
+            $aPushUsersInfo = array();
             foreach ($aUsers as $user) {
-                $aParam = array($this->searchRadius);
-                $param = implode(',', $aParam);
-                $resMsg = $this->_sendMsg($user['user_name'], $this->templateIdNoti, $param, $sMsgType, $this->searchRadius);
+                if(!in_array($user['user_name'], $aPushAlias)){
+                    $aPushAlias[] = $user['user_name'];
+                    $aPushUsersInfo[] = $user;
+                }
+                // $aParam = array($this->searchRadius);
+                // $param = implode(',', $aParam);
+                // // 发送短信
+                // $resMsg = $this->_sendMsg($user['user_name'], $this->templateIdNoti, $param, $sMsgType, $this->searchRadius);
                 
-                if($resMsg['error'] == 0){
-                    //发送短信成功, 标记用户收到短信
+                // if($resMsg['error'] == 0){
+                //     //发送短信成功, 标记用户收到推送
+                //     $aNewLog = array(
+                //         'mt_id' => $id,
+                //         'user_id' => $user['user_id'],
+                //         'created_date' => $db->now(),
+                //         );
+                //     $db->insert('mark_trafficpolice_log', $aNewLog);
+                // }
+            }
+
+            // 使用jpush 推送消息,
+            // Options: 第一个参数为sendno,纯粹用来作为 API 调用标识，API 返回时被原样返回，以方便 API 调用方匹配请求与返回。
+            //Options: 第二个参数为time_to_live,0 表示不保留离线消息，只有推送当前在线的用户可以收到。默认 86400 （1 天），最长 10 天
+            $client = new JPushClient($this->appKey, $this->masterSecret);
+            $response = $client->push()->setPlatform(M\all)
+                ->setAudience(M\audience(M\alias($aPushAlias)))
+                ->setNotification(M\notification($sPushMsg))
+                ->setOptions(M\options($id, 0))
+                ->send();
+            $aPusRes = $this->_objectToArray($response);
+
+            if($response->isOk == 1){
+                foreach ($aPushUsersInfo as $user) {
+                    //推送成功, 标记用户收到推送
                     $aNewLog = array(
                         'mt_id' => $id,
                         'user_id' => $user['user_id'],
+                        'push_content' => $sPushMsg,
+                        'push_param' => $response->json,
                         'created_date' => $db->now(),
                         );
                     $db->insert('mark_trafficpolice_log', $aNewLog);
                 }
             }
+
         }
 
         $aRes = array('id' => $id);
@@ -611,6 +647,10 @@ class api {
             ->send();
 
         $this->assertTrue($response->isOk === true);
+    }
+
+    function updateAlipay(){
+
     }
 
 }
