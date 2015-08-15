@@ -576,6 +576,7 @@ class api {
             $aPusRes = $this->_objectToArray($response);
 
             if($response->isOk == 1){
+                $i = 0;
                 foreach ($aPushUsersInfo as $user) {
                     //推送成功, 标记用户收到推送
                     $aNewLog = array(
@@ -655,6 +656,20 @@ class api {
             'maxLong' => $maxLng
         );
         return $range;
+    }
+
+
+    function getUserPushList(){
+        global $db;
+        $userid = $_REQUEST['userid'];
+        
+        $sql = "SELECT * FROM `mark_trafficpolice` WHERE user_id = '$userid' ORDER BY created_date DESC";
+        $aList = $db->withTotalCount()->rawQuery($sql);
+
+        $this->res['data'] = $aList;
+        $this->res['total'] = $db->totalCount;
+
+        return $this->res;
     }
 
     /**
