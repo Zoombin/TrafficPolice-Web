@@ -658,7 +658,14 @@ class api {
         return $range;
     }
 
-
+    /**
+     * 获得用户发出的推送列表
+     * @method getUserPushList
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-15T17:47:18+0800
+     */
     function getUserPushList(){
         global $db;
         $userid = $_REQUEST['userid'];
