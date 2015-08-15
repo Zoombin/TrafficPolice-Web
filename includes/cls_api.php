@@ -4,8 +4,11 @@
  * api 公用类
  * 
  */
-require_once __DIR__ . '/jpush' . '/autoload.php';
+require_once __DIR__ . '/jpush/autoload.php';
+require_once __DIR__ . '/qiniu/autoload.php';
 
+use Qiniu\Auth;
+use Qiniu\Storage\UploadManager;
 
 use JPush\Model as M;
 use JPush\JPushClient;
@@ -19,20 +22,22 @@ class api {
         'accountsid' => '2fe9bed94650b2455d45e5053e3a687a',
         'token' => '3a1e0c94d52f79df733ec4c2c40cbf88'
         );
-    var $appId = 'f68832e20d7c41c981a3f479d45dd6c3';
+    var $appId              = 'f68832e20d7c41c981a3f479d45dd6c3';
     var $templateIdRegister = '11181';  //注册时验证码, 模板id
-    var $templateIdNoti = '11365';      //发布交警来了, 模板id
-    // var $appTitle = '交警来了';
-    var $msgExpireTime = 10;   // 验证码过期时间, 分钟
-    var $msgTotal = 400;   // 24小时内可申请多少次验证码
+    var $msgExpireTime      = 10;   // 验证码过期时间, 分钟
+    var $msgTotal           = 400;   // 24小时内可申请多少次验证码
     /* 短信配置项 end */
 
     /* jpush配置项 start */
-    public $appKey = '177710617edd09da6b1c9c61';
-    public $masterSecret = 'e28e0aba92dc59df05df345a';
-    public $alert = "JPush Test - alert";
-    public $title = "JPUsh Test - title";
+    var $appKey = '177710617edd09da6b1c9c61';
+    var $masterSecret = 'e28e0aba92dc59df05df345a';
     /* jpush配置项 end */
+
+    /* qiniu配置项 start */
+    var $qiniuAccessKey = 'zrAvv0stUaPwrAYiaSuVgvsUSgajrFDcJoIn62Vp';
+    var $qiniuSecretKey = '8onamuD2Evcu6nzoozjydlRL0oybHrRuc45fy_yA';
+    var $qiniuBucket    = 'trafficpolice';
+    /* qiniu配置项 end */
 
     /* 坐标搜索配置项 start */
     var $searchRadius = 5;   // 搜索半径, 单位: 千米
@@ -479,20 +484,6 @@ class api {
                     $aPushAlias[] = $user['user_name'];
                     $aPushUsersInfo[] = $user;
                 }
-                // $aParam = array($this->searchRadius);
-                // $param = implode(',', $aParam);
-                // // 发送短信
-                // $resMsg = $this->_sendMsg($user['user_name'], $this->templateIdNoti, $param, $sMsgType, $this->searchRadius);
-                
-                // if($resMsg['error'] == 0){
-                //     //发送短信成功, 标记用户收到推送
-                //     $aNewLog = array(
-                //         'mt_id' => $id,
-                //         'user_id' => $user['user_id'],
-                //         'created_date' => $db->now(),
-                //         );
-                //     $db->insert('mark_trafficpolice_log', $aNewLog);
-                // }
             }
 
             // 使用jpush 推送消息,
@@ -637,6 +628,13 @@ class api {
             $this->res['error'] = 1;
             $this->res['msg'] = '添加评论失败';
         }
+        return $this->res;
+    }
+
+    function getQiNiuUploadToken(){
+        $auth = new Auth($this->qiniuAccessKey, $this->qiniuSecretKey);
+        $token = $auth->uploadToken($this->qiniuBucket);
+        $this->res['data'] = array('token' => $token);
         return $this->res;
     }
 
