@@ -283,6 +283,7 @@ class api {
                 'userid' => $aUsers[0]['user_id'],
                 'username' => $aUsers[0]['user_name'],
                 'nickname' => $aUsers[0]['nickname'],
+                'usermoney' => $aUsers[0]['user_money'],
                 );
             $this->res['data'] = $aRes;
             $this->res['error'] = 0;
@@ -586,7 +587,7 @@ class api {
                         'push_param' => $response->json,
                         'created_date' => $db->now(),
                         );
-                    $db->insert('mark_trafficpolice_log', $aNewLog);
+                    $db->insert('mark_trafficpolice_received', $aNewLog);
                 }
             }
 
@@ -627,8 +628,9 @@ class api {
     private function _getNearbyUsers($long, $lat){
         global $db;
         $range = $this->_getRange($long, $lat);
-        $searchTime = $this->searchTime;
-        $sql = "SELECT mp.*,u.nickname,u.user_name FROM `mark_park` mp LEFT JOIN users u ON u.user_id=mp.user_id WHERE mp.longitude >= $range[minLong] AND mp.longitude <= $range[maxLong] AND mp.latitude >= $range[minLat] AND mp.latitude <= $range[maxLat] AND mp.created_date >= DATE_SUB(NOW(),INTERVAL $searchTime hour) ORDER BY mp.created_date DESC";
+        // $searchTime = $this->searchTime;
+        //AND mp.created_date >= DATE_SUB(NOW(),INTERVAL $searchTime hour)
+        $sql = "SELECT mp.*,u.nickname,u.user_name FROM `mark_park` mp LEFT JOIN users u ON u.user_id=mp.user_id WHERE mp.longitude >= $range[minLong] AND mp.longitude <= $range[maxLong] AND mp.latitude >= $range[minLat] AND mp.latitude <= $range[maxLat] AND mp.isactive=1 ORDER BY mp.created_date DESC";
 
         $aTotal = $db->rawQuery($sql);
         return $aTotal;
@@ -691,7 +693,7 @@ class api {
         global $db;
         $userid = $_REQUEST['userid'];
 
-        $sql = "SELECT mtl.id,mtl.user_id,mt.latitude,mt.longitude,mt.image_url,mt.content,mtl.feedback,mtl.feedback_content,mtl.created_date,mtl.pay_success,mtl.pay_money FROM `mark_trafficpolice_log` mtl LEFT JOIN mark_trafficpolice mt ON mtl.mt_id=mt.id WHERE mtl.user_id='$userid' ORDER BY mtl.created_date DESC";
+        $sql = "SELECT mtr.id,mtr.user_id,mt.latitude,mt.longitude,mt.image_url,mt.content,mtr.created_date,mt.address FROM `mark_trafficpolice_received` mtr LEFT JOIN mark_trafficpolice mt ON mtr.mt_id=mt.id WHERE mtr.user_id='$userid' ORDER BY mtr.created_date DESC";
 
         $aList = $db->withTotalCount()->rawQuery($sql);
 
@@ -703,31 +705,140 @@ class api {
 
     /**
      * 在推送列表中, 用户可以选择一条进行评论
-     * @method setNotiComment
+     * @method setNotiLike
      * @return [type]
      *
      * @author wesley zhang <wesley_zh@qq.com>
      * @since  2015-08-13T13:35:33+0800
      */
-    function setNotiComment(){
+    function setNotiLike(){
         global $db;
-        $id              = $_REQUEST['id'];
-        $feedback        = $_REQUEST['feedback'];
-        $feedbackcontent = $_REQUEST['feedbackcontent'];
+        $mtr_id              = $_REQUEST['id'];
 
-        $aUpdate = array(
-            'feedback' => $feedback,
-            'feedback_content' => $feedbackcontent,
+        $aNew = array(
+            'mtr_id' => $mtr_id,
+            'created_date' => $db->now(),
             );
         
-        $db->where ('id', $id);
-        $id = $db->update ('mark_trafficpolice_log', $aUpdate);
-        if ($db->count) {
-            $this->res['msg'] = '添加评论成功';
+        $id = $db->insert ('mark_trafficpolice_like', $aNew);
+        if ($id) {
+            $this->res['msg'] = '操作成功';
         }else{
             $this->res['error'] = 1;
-            $this->res['msg'] = '添加评论失败';
+            $this->res['msg'] = '操作失败';
         }
+        return $this->res;
+    }
+
+    function setNotiNoPolice(){
+        global $db;
+        $mtr_id  = $_REQUEST['id'];
+        $long    = $_REQUEST['long'];
+        $lat     = $_REQUEST['lat'];
+        $address = $_REQUEST['address'];
+
+        $aNew = array(
+            'mtr_id' => $mtr_id,
+            'longitude' => $long,
+            'latitude' => $lat,
+            'address' => $address,
+            'created_date' => $db->now(),
+            );
+        
+        $id = $db->insert ('mark_trafficpolice_nopolice', $aNew);
+        if ($id) {
+            $this->res['msg'] = '操作成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '操作失败';
+        }
+        return $this->res;
+    }
+
+    /**
+     * 在线打赏
+     * @method setNotiReward
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-18T12:05:34+0800
+     */
+    function setNotiReward(){
+        global $db;
+        $mtr_id              = $_REQUEST['id'];
+        $pay_id              = $_REQUEST['uid'];
+
+        $aNew = array(
+            'mtr_id' => $mtr_id,
+            'pay_id' => $pay_id,
+            'created_date' => $db->now(),
+            );
+        
+        $id = $db->insert ('mark_trafficpolice_reward', $aNew);
+        if ($id) {
+            $this->res['msg'] = '操作成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '操作失败';
+        }
+        return $this->res;
+    }
+
+    /* 在线支付成功后, 更新相关信息 */
+    function updateNotireward(){
+
+    }
+
+    /**
+     * 获得某个推送的详细信息以及点赞 等的历史记录
+     * @method getNotiInfo
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-18T12:14:43+0800
+     */
+    function getNotiInfo(){
+        global $db;
+        $id = $_REQUEST['id'];
+        $aData = array();
+        //推送的详细信息
+        $sql = "SELECT mtr.id, mtr.mt_id, mtr.user_id, mt.latitude, mt.longitude, mt.image_url, mt.content, mtr.created_date, mt.address
+            , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id = mtr.id ) > 0 ) THEN 1 ELSE 0 END AS 'isnopolice'
+            , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id = mtr.id ) > 0 ) THEN 1 ELSE 0 END AS 'islike'
+            , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.mtr_id = mtr.id AND reward.pay_success = 1 ) > 0 ) THEN 1 ELSE 0 END AS 'isreward'
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_nopolice'
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_like'
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_reward' 
+            FROM `mark_trafficpolice_received` mtr 
+            LEFT JOIN mark_trafficpolice mt ON mtr.mt_id = mt.id 
+            WHERE mtr.id= '$id' 
+            ORDER BY mtr.created_date DESC"; 
+
+        $aList = $db->rawQuery($sql);
+        $aData['info'] = $aList[0];
+
+        //获得历史记录
+        $mt_id = $aList[0]['mt_id'];
+        $sql = "SELECT t.*,u.user_name,u.nickname FROM
+            (SELECT mtl.id,mtr.user_id,mtl.created_date, 1 AS 'type','' AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_like mtl
+            INNER JOIN mark_trafficpolice_received mtr ON mtl.mtr_id=mtr.id
+            WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT mtn.id,mtr.user_id,mtn.created_date, 2 AS 'type',mtn.address AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_nopolice mtn
+            INNER JOIN mark_trafficpolice_received mtr ON mtn.mtr_id=mtr.id
+            WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT reward.id,mtr.user_id,reward.created_date, 3 AS 'type','' AS 'nopolice_address',reward.pay_money FROM mark_trafficpolice_reward reward
+            INNER JOIN mark_trafficpolice_received mtr ON reward.mtr_id=mtr.id
+            WHERE reward.pay_success=1 AND mtr.mt_id='$mt_id') t
+            LEFT JOIN users u ON t.user_id = u.user_id
+            ORDER BY t.created_date DESC";
+        
+        $aList = $db->rawQuery($sql);
+        $aData['history'] = $aList;
+
+        $this->res['data'] = $aData;
+        $this->res['total'] = $db->totalCount;
+
         return $this->res;
     }
 
@@ -748,8 +859,5 @@ class api {
         $this->assertTrue($response->isOk === true);
     }
 
-    function updateAlipay(){
-
-    }
 
 }
