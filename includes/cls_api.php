@@ -849,15 +849,110 @@ class api {
         return $this->res;
     }
 
-    function jpush(){
-        $client = new JPushClient($this->appKey, $this->masterSecret);
-        $response = $client->push()->setPlatform(M\all)
-            ->setAudience(M\all)
-            ->setNotification(M\notification($this->alert))
-            ->send();
+    /**
+     * 获得最新的一条公告
+     * @method getAnnouncement
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-19T15:03:26+0800
+     */
+    function getAnnouncement(){
+        global $db;
+        $db->orderBy("`id`","desc");
+        $announcement = $db->withTotalCount()->getOne('announcement');
 
-        $this->assertTrue($response->isOk === true);
+        $this->res['data'] = $announcement;
+        $this->res['total'] = $db->totalCount;
+
+        return $this->res;
     }
 
+    /**
+     * 申请提现
+     * @method applyWithdraw
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-19T15:40:48+0800
+     */
+    function applyWithdraw(){
+        global $db;
+        $userid        = $_REQUEST['userid'];
+        $money         = $_REQUEST['money'];
+        $alipayaccount = $_REQUEST['alipayaccount'];
+        
+        $db->where('user_id', $userid);
+        $user = $db->getOne('users');
+
+        if(!$user){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
+        $usermoney = $user['user_money'];
+        if($money > $usermoney){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '余额不足';
+            return $this->res;
+        }
+
+        $aUpdate = array(
+            'user_money' => $usermoney - $money,
+            'updated_date' => $db->now(),
+            );
+        $db->where('user_id', $userid);
+        $db->update('users', $aUpdate);
+
+        $aNewLog = array(
+            'user_id' => $userid,
+            'withdraw_money' => $money,
+            'alipay_account' => $alipayaccount,
+            'status' => 1,
+            'created_date' => $db->now(),
+            );
+        $id = $db->insert('withdraw_cash', $aNewLog);
+        if ($id) {
+            $this->res['error'] = 0;
+            $this->res['msg'] = '申请成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '申请失败';
+        }
+
+        return $this->res;
+    }
+
+    /**
+     * 获得用户流水记录
+     * @method getMoneyLog
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-08-19T16:36:12+0800
+     */
+    function getMoneyLog(){
+        global $db;
+        $userid = $_REQUEST['userid'];
+
+        $sql = "SELECT * FROM
+            (SELECT reward.pay_money AS 'money',1 AS 'type',reward.created_date,'' AS 'status','' AS 'alipay_account' FROM mark_trafficpolice_reward reward
+            WHERE reward.pay_success=1 AND reward.mtr_id IN (
+            SELECT id FROM mark_trafficpolice_received
+            WHERE mt_id IN (
+            SELECT id FROM mark_trafficpolice WHERE user_id = '$userid'
+            )
+            )
+            UNION
+            SELECT wc.withdraw_money AS 'money',2 AS 'type',wc.created_date,wc.`status`,wc.alipay_account FROM withdraw_cash wc
+            WHERE wc.user_id='$userid') t
+            ORDER BY t.created_date DESC";
+
+        $aList = $db->withTotalCount()->rawQuery($sql);
+        $this->res['data'] = $aList;
+        $this->res['total'] = $db->totalCount;
+        return $this->res;
+    }
 
 }
