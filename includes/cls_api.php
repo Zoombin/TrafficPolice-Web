@@ -53,7 +53,7 @@ class api {
      */
     
     var $res = array(
-        'data' => '',
+        'data' => array(),
         'total' => 0,
         'error' => 0,
         'msg' => ''
@@ -675,7 +675,8 @@ class api {
         $sql = "SELECT * FROM `mark_trafficpolice` WHERE user_id = '$userid' ORDER BY created_date DESC";
         $aList = $db->withTotalCount()->rawQuery($sql);
 
-        $this->res['data'] = $aList;
+        if($db->totalCount)
+            $this->res['data'] = $aList;
         $this->res['total'] = $db->totalCount;
 
         return $this->res;
@@ -697,7 +698,8 @@ class api {
 
         $aList = $db->withTotalCount()->rawQuery($sql);
 
-        $this->res['data'] = $aList;
+        if($db->totalCount)
+            $this->res['data'] = $aList;
         $this->res['total'] = $db->totalCount;
 
         return $this->res;
@@ -862,7 +864,8 @@ class api {
         $db->orderBy("`id`","desc");
         $announcement = $db->withTotalCount()->getOne('announcement');
 
-        $this->res['data'] = $announcement;
+        if($db->totalCount)
+            $this->res['data'] = $announcement;
         $this->res['total'] = $db->totalCount;
 
         return $this->res;
@@ -950,7 +953,8 @@ class api {
             ORDER BY t.created_date DESC";
 
         $aList = $db->withTotalCount()->rawQuery($sql);
-        $this->res['data'] = $aList;
+        if($db->totalCount)
+            $this->res['data'] = $aList;
         $this->res['total'] = $db->totalCount;
         return $this->res;
     }

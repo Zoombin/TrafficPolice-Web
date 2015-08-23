@@ -6,7 +6,7 @@ require_once ('./submodules/php-mysqli-database-class/MysqliDb.php');
 require_once('./includes/cls_api.php');
 
 // 初始化数据库类
-$db = new MysqliDb ('localhost', 'root', 'Dsh12345', 'trafficpolice');
+$db = new MysqliDb ('localhost', 'root', '', 'trafficpolice');
 $ip = $_SERVER['SERVER_ADDR'];
 if ($ip == '112.124.98.9') {
 	$db = new MysqliDb ('localhost', 'root', 'Dsh12345', 'trafficpolice');
@@ -17,7 +17,12 @@ $action = $_REQUEST['action'];
 
 $api = new api($db);
 
-$res = array();
+$res = array(
+    'data' => array(),
+    'total' => 0,
+    'error' => 0,
+    'msg' => ''
+    );
 if($action){
     if (method_exists($api, $action)) {
         $res = $api->$action();
