@@ -815,8 +815,10 @@ class api {
             WHERE mtr.id= '$id' 
             ORDER BY mtr.created_date DESC"; 
 
+        $aData['info'] = array();
         $aList = $db->rawQuery($sql);
-        $aData['info'] = $aList[0];
+        if($aList)
+            $aData['info'] = $aList[0];
 
         //获得历史记录
         $mt_id = $aList[0]['mt_id'];
@@ -835,8 +837,10 @@ class api {
             LEFT JOIN users u ON t.user_id = u.user_id
             ORDER BY t.created_date DESC";
         
+        $aData['history'] = array();
         $aList = $db->rawQuery($sql);
-        $aData['history'] = $aList;
+        if($aList)
+            $aData['history'] = $aList;
 
         $this->res['data'] = $aData;
         $this->res['total'] = $db->totalCount;
