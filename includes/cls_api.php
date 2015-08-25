@@ -284,6 +284,7 @@ class api {
                 'username' => $aUsers[0]['user_name'],
                 'nickname' => $aUsers[0]['nickname'],
                 'usermoney' => $aUsers[0]['user_money'],
+                'avatarurl' => $aUsers[0]['avatar_url'],
                 );
             $this->res['data'] = $aRes;
             $this->res['error'] = 0;
