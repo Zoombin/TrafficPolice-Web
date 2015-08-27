@@ -805,6 +805,7 @@ class api {
         $aData = array();
         //推送的详细信息
         $sql = "SELECT mtr.id, mtr.mt_id, mtr.user_id, mt.latitude, mt.longitude, mt.image_url, mt.content, mtr.created_date, mt.address
+            , u.user_name,u.nickname,u.avatar_url
             , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id = mtr.id ) > 0 ) THEN 1 ELSE 0 END AS 'isnopolice'
             , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id = mtr.id ) > 0 ) THEN 1 ELSE 0 END AS 'islike'
             , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.mtr_id = mtr.id AND reward.pay_success = 1 ) > 0 ) THEN 1 ELSE 0 END AS 'isreward'
@@ -813,6 +814,7 @@ class api {
             , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_reward' 
             FROM `mark_trafficpolice_received` mtr 
             LEFT JOIN mark_trafficpolice mt ON mtr.mt_id = mt.id 
+            LEFT JOIN users u ON u.user_id = mtr.user_id
             WHERE mtr.id= '$id' 
             ORDER BY mtr.created_date DESC"; 
 
