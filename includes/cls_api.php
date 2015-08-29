@@ -196,8 +196,10 @@ class api {
             }
         }
 
-        $aUpdateUser['password'] = $password;
-        $aUpdateUser['nickname'] = $nickname;
+        if($password)
+            $aUpdateUser['password'] = $password;
+        if($nickname)
+            $aUpdateUser['nickname'] = $nickname;
         $aUpdateUser['updated_date'] = $db->now();
         if($avatarurl)
             $aUpdateUser['avatar_url'] = $avatarurl;
