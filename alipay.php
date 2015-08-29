@@ -13,17 +13,6 @@ if (!empty($_POST)) {
     }
 }
 $seller_email = rawurldecode($_GET['seller_email']);
-$order_sn = str_replace($_GET['subject'], '', $_GET['out_trade_no']);
-$order_sn = trim($order_sn);
-
-$restock_id = $_GET['subject'];
-
-$kv = array ();
-foreach ( $_GET as $key => $value ) {
-    $kv [] = "$key=$value";
-}
-$s = join ( "&", $kv );
-
 
 /* 检查数字签名是否正确 */
 ksort($_GET);
@@ -38,13 +27,19 @@ foreach ($_GET AS $key=>$val) {
 
 $sign = substr($sign, 0, -1) . $alipay_key;
 //$sign = substr($sign, 0, -1) . ALIPAY_AUTH;
+
+$kv = array ();
+foreach ( $_GET as $key => $value ) {
+    $kv [] = "$key=$value";
+}
+$s = join ( "&", $kv );
 $s .= '&mdrsign='.md5($sign);
 $s .= '&localsign='.($sign);
 $s .= "\n";
 $sPath = '/tmp/test_log.txt';
-file_put_contents ( $sPath, $s, FILE_APPEND );
+// file_put_contents ( $sPath, $s, FILE_APPEND );
 if (md5($sign) != $_GET['sign']) {
-    return false;
+    // return false;
 }
 
 if ($_GET['trade_status'] == 'WAIT_SELLER_SEND_GOODS') {
@@ -74,6 +69,9 @@ function order_paid(){
     $aPayId = explode('_', $payid);
     $mtrid = $aPayId[1];
     $params = json_encode($_GET);
+
+    //TODO...
+    //验证是否已经支付过
 
     $aNew = array(
         'mtr_id' => $mtrid,
