@@ -560,7 +560,7 @@ class api {
             $aPushAlias = array();
             $aPushUsersInfo = array();
             foreach ($aUsers as $user) {
-                if(!in_array($user['user_name'], $aPushAlias)){
+                if(!in_array($user['user_name'], $aPushAlias) && $userid != $user['user_id']){
                     $aPushAlias[] = $user['user_name'];
                     $aPushUsersInfo[] = $user;
                 }
