@@ -71,19 +71,22 @@ function order_paid(){
     $mtrid = $aPayId[1];
     $params = json_encode($_GET);
 
-    //TODO...
     //验证是否已经支付过
-
-    $aNew = array(
-        'mtr_id' => $mtrid,
-        'pay_id' => $payid,
-        'pay_success' => 1,
-        'pay_money' => $_GET['total_fee'],
-        'pay_date' => $_GET['gmt_payment'],
-        'pay_params' => $params,
-        'created_date' => $db->now(),
-        );
-    $id = $db->insert ('mark_trafficpolice_reward', $aNew);
+    $db->where("mtr_id = '$mtrid'")->get('mark_trafficpolice_reward');
+    
+    if($db->count == 0){
+        $aNew = array(
+            'mtr_id' => $mtrid,
+            'pay_id' => $payid,
+            'pay_success' => 1,
+            'pay_money' => $_GET['total_fee'],
+            'pay_date' => $_GET['gmt_payment'],
+            'pay_params' => $params,
+            'created_date' => $db->now(),
+            );
+        $id = $db->insert ('mark_trafficpolice_reward', $aNew);
+    }
+    
 }
 
 
