@@ -907,7 +907,7 @@ class api {
     function getAnnouncement(){
         global $db;
         $db->orderBy("`id`","desc");
-        $announcement = $db->withTotalCount()->getOne('announcement');
+        $announcement = $db->withTotalCount()->get('announcement');
 
         if($db->totalCount)
             $this->res['data'] = $announcement;
