@@ -19,13 +19,11 @@ $order_sn = trim($order_sn);
 $restock_id = $_GET['subject'];
 
 $kv = array ();
-foreach ( $_POST as $key => $value ) {
+foreach ( $_GET as $key => $value ) {
     $kv [] = "$key=$value";
 }
 $s = join ( "&", $kv );
- 
-$sPath = '/tmp/test_log.txt';
-file_put_contents ( $sPath, $s, FILE_APPEND );
+
 
 /* 检查数字签名是否正确 */
 ksort($_GET);
@@ -40,31 +38,28 @@ foreach ($_GET AS $key=>$val) {
 
 $sign = substr($sign, 0, -1) . $alipay_key;
 //$sign = substr($sign, 0, -1) . ALIPAY_AUTH;
+$s .= '&mdrsign='.md5($sign);
+$s .= '&localsign='.($sign);
+$s .= "\n";
+$sPath = '/tmp/test_log.txt';
+file_put_contents ( $sPath, $s, FILE_APPEND );
 if (md5($sign) != $_GET['sign']) {
     return false;
 }
-/* 进货单 在线支付 */
-if($order_sn == 'restock_pay'){
-    order_restock_paid($restock_id, $_GET['total_fee']);
-    return true;
-}
-/* 检查支付的金额是否相符 */
-if (!check_money($order_sn, $_GET['total_fee'])) {
-    return false;
-}
+
 if ($_GET['trade_status'] == 'WAIT_SELLER_SEND_GOODS') {
     /* 改变订单状态 */
-    order_paid($order_sn, 2);
+    order_paid();
 
     return true;
 } elseif ($_GET['trade_status'] == 'TRADE_FINISHED') {
     /* 改变订单状态 */
-    order_paid($order_sn);
+    order_paid();
 
     return true;
 } elseif ($_GET['trade_status'] == 'TRADE_SUCCESS') {
     /* 改变订单状态 */
-    order_paid($order_sn, 2);
+    order_paid();
 
     return true;
 } else {
@@ -72,7 +67,25 @@ if ($_GET['trade_status'] == 'WAIT_SELLER_SEND_GOODS') {
 }
 
 
+function order_paid(){
+    require('./includes/config.php');
+    $db = new MysqliDb ($db_host, $db_user, $db_pass, $db_name);
+    $payid = $_GET['out_trade_no'];
+    $aPayId = explode('_', $payid);
+    $mtrid = $aPayId[1];
+    $params = json_encode($_GET);
 
+    $aNew = array(
+        'mtr_id' => $mtrid,
+        'pay_id' => $payid,
+        'pay_success' => 1,
+        'pay_money' => $_GET['total_fee'],
+        'pay_date' => $_GET['gmt_payment'],
+        'pay_params' => $params,
+        'created_date' => $db->now(),
+        );
+    $id = $db->insert ('mark_trafficpolice_reward', $aNew);
+}
 
 
 ?>
