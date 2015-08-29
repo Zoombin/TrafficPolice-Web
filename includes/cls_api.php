@@ -821,7 +821,7 @@ class api {
             , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_reward' 
             FROM `mark_trafficpolice_received` mtr 
             LEFT JOIN mark_trafficpolice mt ON mtr.mt_id = mt.id 
-            LEFT JOIN users u ON u.user_id = mtr.user_id
+            LEFT JOIN users u ON u.user_id = mt.user_id
             WHERE mtr.id= '$id' 
             ORDER BY mtr.created_date DESC"; 
 

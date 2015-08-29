@@ -87,7 +87,6 @@ function order_paid(){
         $id = $db->insert ('mark_trafficpolice_reward', $aNew);
 
         //给用户增加余额
-        $mtrid = 20;
         $sql = "SELECT mt.user_id,u.user_money FROM `mark_trafficpolice` mt
             LEFT JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id
             LEFT JOIN users u ON u.user_id=mt.user_id
