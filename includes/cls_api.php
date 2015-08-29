@@ -578,26 +578,28 @@ class api {
                     ->send();
                 // $aPusRes = $this->_objectToArray($response);
 
-                if($response->isOk == 1){
-                    $i = 0;
-                    foreach ($aPushUsersInfo as $user) {
-                        //推送成功, 标记用户收到推送
-                        $aNewLog = array(
-                            'mt_id' => $id,
-                            'user_id' => $user['user_id'],
-                            'push_content' => $sPushMsg,
-                            'push_param' => $response->json,
-                            'created_date' => $db->now(),
-                            );
-                        $db->insert('mark_trafficpolice_received', $aNewLog);
-                    }
-                }
+                // if($response->isOk == 1){
+                //      //推送成功, 标记用户收到推送   
+                // }
             }catch(Exception $e){
                 // print('<pre>');
                 // print_r($e->getMessage());
                 // print('</pre>');
             }
+
+            //不管推送是否成功, 都标记用户收到
+            foreach ($aPushUsersInfo as $user) {
+                $aNewLog = array(
+                    'mt_id' => $id,
+                    'user_id' => $user['user_id'],
+                    'push_content' => $sPushMsg,
+                    'push_param' => $response->json,
+                    'created_date' => $db->now(),
+                    );
+                $db->insert('mark_trafficpolice_received', $aNewLog);
+            }
         }
+
 
         $aRes = array('id' => $id);
         if ($id) {
