@@ -213,6 +213,37 @@ class api {
         return $this->res;
     }
 
+    function getUserInfo(){
+        global $db;
+        $userid   = $_REQUEST['userid'];
+
+        if(!$userid){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户id不存在';
+            return $this->res;
+        }
+
+        $aUsers = $db->where("user_id = '$userid'")->get('users');
+
+        if($db->count){
+            $aRes = array(
+                'userid' => $aUsers[0]['user_id'],
+                'username' => $aUsers[0]['user_name'],
+                'nickname' => $aUsers[0]['nickname'],
+                'usermoney' => $aUsers[0]['user_money'],
+                'avatarurl' => $aUsers[0]['avatar_url'],
+                );
+            $this->res['data'] = $aRes;
+            $this->res['error'] = 0;
+            $this->res['msg'] = '获取成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '获取失败';
+        }
+
+        return $this->res;
+    }
+
     /**
      * 获取手机验证码
      *
