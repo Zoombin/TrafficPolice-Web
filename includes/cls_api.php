@@ -569,29 +569,34 @@ class api {
             // 使用jpush 推送消息,
             // Options: 第一个参数为sendno,纯粹用来作为 API 调用标识，API 返回时被原样返回，以方便 API 调用方匹配请求与返回。
             //Options: 第二个参数为time_to_live,0 表示不保留离线消息，只有推送当前在线的用户可以收到。默认 86400 （1 天），最长 10 天
-            $client = new JPushClient($this->appKey, $this->masterSecret);
-            $response = $client->push()->setPlatform(M\all)
-                ->setAudience(M\audience(M\alias($aPushAlias)))
-                ->setNotification(M\notification($sPushMsg))
-                ->setOptions(M\options($id, 0))
-                ->send();
-            $aPusRes = $this->_objectToArray($response);
+            try{
+                $client = new JPushClient($this->appKey, $this->masterSecret);
+                $response = $client->push()->setPlatform(M\all)
+                    ->setAudience(M\audience(M\alias($aPushAlias)))
+                    ->setNotification(M\notification($sPushMsg))
+                    ->setOptions(M\options($id, 0))
+                    ->send();
+                // $aPusRes = $this->_objectToArray($response);
 
-            if($response->isOk == 1){
-                $i = 0;
-                foreach ($aPushUsersInfo as $user) {
-                    //推送成功, 标记用户收到推送
-                    $aNewLog = array(
-                        'mt_id' => $id,
-                        'user_id' => $user['user_id'],
-                        'push_content' => $sPushMsg,
-                        'push_param' => $response->json,
-                        'created_date' => $db->now(),
-                        );
-                    $db->insert('mark_trafficpolice_received', $aNewLog);
+                if($response->isOk == 1){
+                    $i = 0;
+                    foreach ($aPushUsersInfo as $user) {
+                        //推送成功, 标记用户收到推送
+                        $aNewLog = array(
+                            'mt_id' => $id,
+                            'user_id' => $user['user_id'],
+                            'push_content' => $sPushMsg,
+                            'push_param' => $response->json,
+                            'created_date' => $db->now(),
+                            );
+                        $db->insert('mark_trafficpolice_received', $aNewLog);
+                    }
                 }
+            }catch(Exception $e){
+                // print('<pre>');
+                // print_r($e->getMessage());
+                // print('</pre>');
             }
-
         }
 
         $aRes = array('id' => $id);
