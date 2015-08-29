@@ -85,6 +85,25 @@ function order_paid(){
             'created_date' => $db->now(),
             );
         $id = $db->insert ('mark_trafficpolice_reward', $aNew);
+
+        //给用户增加余额
+        $mtrid = 20;
+        $sql = "SELECT mt.user_id,u.user_money FROM `mark_trafficpolice` mt
+            LEFT JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id
+            LEFT JOIN users u ON u.user_id=mt.user_id
+            WHERE mtr.id= '$mtrid'";
+        $aUser = $db->rawQuery($sql);
+
+        if($db->count){
+            $aUpdate = array(
+                'user_money' => $aUser[0]['user_money'] + $_GET['total_fee'],
+                'updated_date' => $db->now(),
+                );
+            $db->where('user_id', $aUser[0]['user_id']);
+            $db->update('users', $aUpdate);
+        }
+    }else{
+        echo "already rewarded";
     }
     
 }
