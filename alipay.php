@@ -63,6 +63,7 @@ if ($_GET['trade_status'] == 'WAIT_SELLER_SEND_GOODS') {
 
 
 function order_paid(){
+    require_once ('./submodules/php-mysqli-database-class/MysqliDb.php');
     require('./includes/config.php');
     $db = new MysqliDb ($db_host, $db_user, $db_pass, $db_name);
     $payid = $_GET['out_trade_no'];
