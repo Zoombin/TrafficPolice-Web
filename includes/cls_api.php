@@ -832,7 +832,7 @@ class api {
 
         //获得历史记录
         $mt_id = $aList[0]['mt_id'];
-        $sql = "SELECT t.*,u.user_name,u.nickname FROM
+        $sql = "SELECT t.*,u.user_name,u.nickname,u.avatar_url FROM
             (SELECT mtl.id,mtr.user_id,mtl.created_date, 1 AS 'type','' AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_like mtl
             INNER JOIN mark_trafficpolice_received mtr ON mtl.mtr_id=mtr.id
             WHERE mtr.mt_id='$mt_id'
