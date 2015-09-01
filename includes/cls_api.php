@@ -509,6 +509,7 @@ class api {
 
         $sql = "SELECT * FROM `mark_park` WHERE user_id = '$userid' ORDER BY created_date DESC LIMIT 1";
         $aInfo = $db->rawQuery($sql);
+        $this->res['data'] = new stdclass();
         if($aInfo[0])
             $this->res['data'] = $aInfo[0];
         return $this->res;
@@ -833,6 +834,7 @@ class api {
 
     /**
      * 获得某个推送的详细信息以及点赞 等的历史记录
+     * type: 1: 点赞 2:没看到交警 3:打赏
      * @method getNotiInfo
      * @return [type]
      *
@@ -1003,6 +1005,63 @@ class api {
         if($db->totalCount)
             $this->res['data'] = $aList;
         $this->res['total'] = $db->totalCount;
+        return $this->res;
+    }
+
+    /**
+     * 获得发出的推送的详细信息以及点赞 等的历史记录
+     * type: 1: 点赞 2:没看到交警 3:打赏
+     * @method getUserNotiInfo
+     * @return [type]
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-09-01T17:17:03+0800
+     */
+    function getUserNotiInfo(){
+        global $db;
+        $id = $_REQUEST['id'];
+        $aData = array();
+        //推送的详细信息
+        $sql = "SELECT mt.id, mt.user_id, mt.latitude, mt.longitude, mt.image_url, mt.content, mt.created_date, mt.address
+            , u.user_name,u.nickname,u.avatar_url
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_nopolice'
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_like'
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_reward' 
+            FROM `mark_trafficpolice` mt 
+            LEFT JOIN users u ON u.user_id = mt.user_id
+            WHERE mt.id= '$id' 
+            ORDER BY mt.created_date DESC"; 
+
+        $aData['info'] = array();
+        $aList = $db->rawQuery($sql);
+        if($aList)
+            $aData['info'] = $aList[0];
+
+        //获得历史记录
+        $mt_id = $id;
+        $sql = "SELECT t.*,u.user_name,u.nickname,u.avatar_url FROM
+            (SELECT mtl.id,mtr.user_id,mtl.created_date, 1 AS 'type','' AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_like mtl
+            INNER JOIN mark_trafficpolice_received mtr ON mtl.mtr_id=mtr.id
+            WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT mtn.id,mtr.user_id,mtn.created_date, 2 AS 'type',mtn.address AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_nopolice mtn
+            INNER JOIN mark_trafficpolice_received mtr ON mtn.mtr_id=mtr.id
+            WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT reward.id,mtr.user_id,reward.created_date, 3 AS 'type','' AS 'nopolice_address',reward.pay_money FROM mark_trafficpolice_reward reward
+            INNER JOIN mark_trafficpolice_received mtr ON reward.mtr_id=mtr.id
+            WHERE reward.pay_success=1 AND mtr.mt_id='$mt_id') t
+            LEFT JOIN users u ON t.user_id = u.user_id
+            ORDER BY t.created_date DESC";
+        
+        $aData['history'] = array();
+        $aList = $db->rawQuery($sql);
+        if($aList)
+            $aData['history'] = $aList;
+
+        $this->res['data'] = $aData;
+        $this->res['total'] = $db->totalCount;
+
         return $this->res;
     }
 
