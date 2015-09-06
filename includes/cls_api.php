@@ -40,7 +40,7 @@ class api {
     /* qiniu配置项 end */
 
     /* 坐标搜索配置项 start */
-    var $searchRadius = 5;   // 搜索半径, 单位: 千米
+    var $searchRadius = 0.3;   // 搜索半径, 单位: 千米
     var $searchTime = 48;       // 搜索多少小时以内的记录, 单位: 小时
     /* 坐标搜索配置项 end */
 
@@ -110,7 +110,7 @@ class api {
         $isExist = $this->isUserExist($username);
         if($isExist){
             $this->res['error'] = 1;
-            $this->res['msg'] = '用户名已经存在';
+            $this->res['msg'] = '手机号码已存在';
             return $this->res;
         }
         //valid captcha
