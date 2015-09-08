@@ -1017,7 +1017,9 @@ class api {
         $userid = $_REQUEST['userid'];
 
         $sql = "SELECT * FROM
-            (SELECT reward.pay_money AS 'money',1 AS 'type',reward.created_date,'' AS 'status','' AS 'alipay_account' FROM mark_trafficpolice_reward reward
+            (SELECT reward.pay_money AS 'money',1 AS 'type',reward.created_date,'' AS 'status','' AS 'alipay_account',u.nickname FROM mark_trafficpolice_reward reward
+            LEFT JOIN mark_trafficpolice_received mtr ON reward.mtr_id=mtr.id
+            LEFT JOIN users u ON mtr.user_id=u.user_id
             WHERE reward.pay_success=1 AND reward.mtr_id IN (
             SELECT id FROM mark_trafficpolice_received
             WHERE mt_id IN (
@@ -1025,7 +1027,7 @@ class api {
             )
             )
             UNION
-            SELECT wc.withdraw_money AS 'money',2 AS 'type',wc.created_date,wc.`status`,wc.alipay_account FROM withdraw_cash wc
+            SELECT wc.withdraw_money AS 'money',2 AS 'type',wc.created_date,wc.`status`,wc.alipay_account,'' AS nickname FROM withdraw_cash wc
             WHERE wc.user_id='$userid') t
             ORDER BY t.created_date DESC";
 
