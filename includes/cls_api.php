@@ -603,12 +603,13 @@ class api {
             // 使用jpush 推送消息,
             // Options: 第一个参数为sendno,纯粹用来作为 API 调用标识，API 返回时被原样返回，以方便 API 调用方匹配请求与返回。
             //Options: 第二个参数为time_to_live,0 表示不保留离线消息，只有推送当前在线的用户可以收到。默认 86400 （1 天），最长 10 天
+            // Options: http://docs.jpush.io/server/rest_api_v3_push/#options
             try{
                 $client = new JPushClient($this->appKey, $this->masterSecret);
                 $response = $client->push()->setPlatform(M\all)
                     ->setAudience(M\audience(M\alias($aPushAlias)))
                     ->setNotification(M\notification($sPushMsg))
-                    ->setOptions(M\options($id, 0))
+                    ->setOptions(M\options($id, 0, null, true))
                     ->send();
                 // $aPusRes = $this->_objectToArray($response);
 
