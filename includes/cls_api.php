@@ -800,6 +800,13 @@ class api {
         return $this->res;
     }
 
+    /**
+     * 收到推送的用户评论收到的推送
+     * @method setNotiComment
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-09-19T21:30:21+0800
+     */
     function setNotiComment(){
         global $db;
         $mtr_id  = $_REQUEST['id'];
@@ -812,6 +819,34 @@ class api {
             );
         
         $id = $db->insert ('mark_trafficpolice_comment', $aNew);
+        if ($id) {
+            $this->res['msg'] = '操作成功';
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '操作失败';
+        }
+        return $this->res;
+    }
+
+    /**
+     * 用户评论自己发出的推送
+     * @method setNotiCommentSelf
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-09-19T21:31:24+0800
+     */
+    function setNotiCommentSelf(){
+        global $db;
+        $mt_id  = $_REQUEST['id'];
+        $content  = $_REQUEST['content'];
+
+        $aNew = array(
+            'mt_id' => $mt_id,
+            'comment_content' => $content,
+            'created_date' => $db->now(),
+            );
+        
+        $id = $db->insert ('mark_trafficpolice_comment_self', $aNew);
         if ($id) {
             $this->res['msg'] = '操作成功';
         }else{
@@ -907,6 +942,10 @@ class api {
             SELECT mtc.id,mtr.user_id,mtc.created_date, 4 AS 'type','' AS 'nopolice_address','' AS 'pay_money',mtc.comment_content AS 'comment' FROM mark_trafficpolice_comment mtc
             INNER JOIN mark_trafficpolice_received mtr ON mtc.mtr_id=mtr.id
             WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT mtcs.id,mt.user_id,mtcs.created_date, 4 AS 'type','' AS 'nopolice_address','' AS 'pay_money',mtcs.comment_content AS 'comment' FROM mark_trafficpolice_comment_self mtcs
+            INNER JOIN mark_trafficpolice mt ON mtcs.mt_id=mt.id
+            WHERE mtcs.mt_id='$mt_id'
             ) t
             LEFT JOIN users u ON t.user_id = u.user_id
             ORDER BY t.created_date DESC";
@@ -1041,7 +1080,7 @@ class api {
 
     /**
      * 获得发出的推送的详细信息以及点赞 等的历史记录
-     * type: 1: 点赞 2:没看到交警 3:打赏
+     * type: 1: 点赞 2:没看到交警 3:打赏 4:评论
      * @method getUserNotiInfo
      * @return [type]
      *
@@ -1071,17 +1110,26 @@ class api {
         //获得历史记录
         $mt_id = $id;
         $sql = "SELECT t.*,u.user_name,u.nickname,u.avatar_url FROM
-            (SELECT mtl.id,mtr.user_id,mtl.created_date, 1 AS 'type','' AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_like mtl
+            (SELECT mtl.id,mtr.user_id,mtl.created_date, 1 AS 'type','' AS 'nopolice_address','' AS 'pay_money','' AS 'comment' FROM mark_trafficpolice_like mtl
             INNER JOIN mark_trafficpolice_received mtr ON mtl.mtr_id=mtr.id
             WHERE mtr.mt_id='$mt_id'
             UNION
-            SELECT mtn.id,mtr.user_id,mtn.created_date, 2 AS 'type',mtn.address AS 'nopolice_address','' AS 'pay_money' FROM mark_trafficpolice_nopolice mtn
+            SELECT mtn.id,mtr.user_id,mtn.created_date, 2 AS 'type',mtn.address AS 'nopolice_address','' AS 'pay_money','' AS 'comment' FROM mark_trafficpolice_nopolice mtn
             INNER JOIN mark_trafficpolice_received mtr ON mtn.mtr_id=mtr.id
             WHERE mtr.mt_id='$mt_id'
             UNION
-            SELECT reward.id,mtr.user_id,reward.created_date, 3 AS 'type','' AS 'nopolice_address',reward.pay_money FROM mark_trafficpolice_reward reward
+            SELECT reward.id,mtr.user_id,reward.created_date, 3 AS 'type','' AS 'nopolice_address',reward.pay_money,'' AS 'comment' FROM mark_trafficpolice_reward reward
             INNER JOIN mark_trafficpolice_received mtr ON reward.mtr_id=mtr.id
-            WHERE reward.pay_success=1 AND mtr.mt_id='$mt_id') t
+            WHERE reward.pay_success=1 AND mtr.mt_id='$mt_id'
+            UNION
+            SELECT mtc.id,mtr.user_id,mtc.created_date, 4 AS 'type','' AS 'nopolice_address','' AS 'pay_money',mtc.comment_content AS 'comment' FROM mark_trafficpolice_comment mtc
+            INNER JOIN mark_trafficpolice_received mtr ON mtc.mtr_id=mtr.id
+            WHERE mtr.mt_id='$mt_id'
+            UNION
+            SELECT mtcs.id,mt.user_id,mtcs.created_date, 4 AS 'type','' AS 'nopolice_address','' AS 'pay_money',mtcs.comment_content AS 'comment' FROM mark_trafficpolice_comment_self mtcs
+            INNER JOIN mark_trafficpolice mt ON mtcs.mt_id=mt.id
+            WHERE mtcs.mt_id='$mt_id'
+            ) t
             LEFT JOIN users u ON t.user_id = u.user_id
             ORDER BY t.created_date DESC";
         
