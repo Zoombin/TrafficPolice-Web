@@ -912,7 +912,7 @@ class api {
             , ( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_nopolice'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_like'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_reward' 
-            , ( SELECT COUNT(*) FROM mark_trafficpolice_comment mtc WHERE mtc.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id )) AS 'total_comment' 
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_comment mtc WHERE mtc.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mtr.mt_id ))+(SELECT COUNT(*) FROM mark_trafficpolice_comment_self mtcs WHERE mtcs.mt_id=mtr.mt_id) AS 'total_comment' 
             FROM `mark_trafficpolice_received` mtr 
             LEFT JOIN mark_trafficpolice mt ON mtr.mt_id = mt.id 
             LEFT JOIN users u ON u.user_id = mt.user_id
@@ -1097,6 +1097,7 @@ class api {
             , ( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_nopolice'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_like'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_reward' 
+            , ( SELECT COUNT(*) FROM mark_trafficpolice_comment mtc WHERE mtc.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id ))+(SELECT COUNT(*) FROM mark_trafficpolice_comment_self mtcs WHERE mtcs.mt_id=mt.id) AS 'total_comment' 
             FROM `mark_trafficpolice` mt 
             LEFT JOIN users u ON u.user_id = mt.user_id
             WHERE mt.id= '$id' 
