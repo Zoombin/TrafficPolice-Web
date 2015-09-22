@@ -1094,6 +1094,7 @@ class api {
         //推送的详细信息
         $sql = "SELECT mt.id, mt.user_id, mt.latitude, mt.longitude, mt.image_url, mt.content, mt.created_date, mt.address
             , u.user_name,u.nickname,u.avatar_url
+            , CASE WHEN (( SELECT COUNT(*) FROM mark_trafficpolice_comment_self mtcs WHERE mtcs.mt_id = mt.id ) > 0 ) THEN 1 ELSE 0 END AS 'iscomment'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_nopolice mtn WHERE mtn.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_nopolice'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_like mtl WHERE mtl.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_like'
             , ( SELECT COUNT(*) FROM mark_trafficpolice_reward reward WHERE reward.pay_success = 1 AND reward.mtr_id IN ( SELECT t.id FROM mark_trafficpolice_received t WHERE t.mt_id = mt.id )) AS 'total_reward' 
