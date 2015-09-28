@@ -356,7 +356,7 @@ class api {
                 'avatarurl' => $aUsers[0]['avatar_url'],
                 );
             $this->res['data'] = $aRes;
-            $this->res['msg'] = '登陆成功';
+            $this->res['msg'] = '登录成功';
             // $aUpdateUser = array();
             // $aUpdateUser['password'] = $password;
             // $db->where ('user_id', $aRes['userid']);
@@ -376,7 +376,7 @@ class api {
     }
 
     /**
-     * 用户登陆
+     * 用户登录
      * @method loginUser
      * @return [type]
      *
@@ -400,7 +400,7 @@ class api {
                 );
             $this->res['data'] = $aRes;
             $this->res['error'] = 0;
-            $this->res['msg'] = '登陆成功';
+            $this->res['msg'] = '登录成功';
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '用户名或密码错误';
