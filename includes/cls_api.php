@@ -184,7 +184,7 @@ class api {
         $db->where ('user_id', $userid);
         $user = $db->getOne('users');
 
-        if($username != $user['user_name']){
+        if($username != $user['user_name'] && $username){
             // whether already exist
             $isExist = $this->isUserExist($username);
             if($isExist){
@@ -259,9 +259,9 @@ class api {
      * @author wesley zhang <wesley_zh@qq.com>
      * @since  2015-08-09T01:43:14+0800
      */
-    function getRegCaptcha(){
+    function getRegCaptcha($sMsgType = 'regUser'){
         global $db;
-        $sMsgType = 'regUser';
+        // $sMsgType = 'regUser';
         $phone = $_REQUEST['username'];
         if(!$phone){// TODO... valid phone number
             $this->res['error'] = 1;
@@ -293,6 +293,84 @@ class api {
         if($cnt >= 1)
             $this->res['msg'] = '该手机还可获取'.($this->msgTotal-$cnt-1).'次验证码，请尽快完成验证。';
                 
+        return $this->res;
+    }
+
+    /**
+     * 忘记密码时, 获取手机验证码
+     *
+     * @method getForgetPWDCaptcha
+     * @access public
+     * 
+     * @param   string  $_REQUEST['username']     手机号码
+     * 
+     * @return array
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-09-28T11:43:14+0800
+     */
+    function getForgetPWDCaptcha(){
+        $sMsgType = 'forgetPWD';
+        $res = $this->getRegCaptcha($sMsgType);
+        return $res;
+    }
+
+    /**
+     * 忘记密码时, 设置新密码
+     * @method updateUserPWD
+     * @return array
+     *
+     * @author wesley zhang <wesley_zh@qq.com>
+     * @since  2015-09-28T11:49:03+0800
+     */
+    function updateUserPWD(){
+        global $db;
+        $username = $_REQUEST['username'];
+        $username = trim($username);
+        $password = $_REQUEST['password']; //设置的新密码
+        $captcha  = $_REQUEST['captcha'];
+
+        if(!$username){
+            $this->res['error'] = 1;
+            $this->res['msg'] = '请输入用户名';
+            return $this->res;
+        }
+
+        //valid captcha
+        $sMsgType = 'forgetPWD';
+        $isCaptcha = $this->_validMobileCaptcha($username, $sMsgType, $captcha);
+        if($isCaptcha['error']){
+            $this->res['error'] = 1;
+            $this->res['msg'] = $isCaptcha['msg'];
+            return $this->res;
+        }
+
+        $aUsers = $db->where("user_name = '$username'")->get('users');
+
+        if($db->count){
+            $aRes = array(
+                'userid' => $aUsers[0]['user_id'],
+                'username' => $aUsers[0]['user_name'],
+                'nickname' => $aUsers[0]['nickname'],
+                'usermoney' => $aUsers[0]['user_money'],
+                'avatarurl' => $aUsers[0]['avatar_url'],
+                );
+            $this->res['data'] = $aRes;
+            $aUpdateUser = array();
+            $aUpdateUser['password'] = $password;
+            $db->where ('user_id', $aRes['userid']);
+            $id = $db->update ('users', $aUpdateUser);
+            if ($db->count) {
+                $this->res['msg'] = '用户更新成功';
+            }else{
+                $this->res['error'] = 1;
+                $this->res['msg'] = '用户更新失败';
+            }
+        }else{
+            $this->res['error'] = 1;
+            $this->res['msg'] = '用户不存在 ';
+        }
+
         return $this->res;
     }
 
