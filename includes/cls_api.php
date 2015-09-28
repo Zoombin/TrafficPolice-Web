@@ -327,7 +327,7 @@ class api {
         global $db;
         $username = $_REQUEST['username'];
         $username = trim($username);
-        $password = $_REQUEST['password']; //设置的新密码
+        // $password = $_REQUEST['password']; //设置的新密码
         $captcha  = $_REQUEST['captcha'];
 
         if(!$username){
@@ -356,19 +356,19 @@ class api {
                 'avatarurl' => $aUsers[0]['avatar_url'],
                 );
             $this->res['data'] = $aRes;
-            $aUpdateUser = array();
-            $aUpdateUser['password'] = $password;
-            $db->where ('user_id', $aRes['userid']);
-            $id = $db->update ('users', $aUpdateUser);
-            if ($db->count) {
-                $this->res['msg'] = '用户更新成功';
-            }else{
-                $this->res['error'] = 1;
-                $this->res['msg'] = '用户更新失败';
-            }
+            // $aUpdateUser = array();
+            // $aUpdateUser['password'] = $password;
+            // $db->where ('user_id', $aRes['userid']);
+            // $id = $db->update ('users', $aUpdateUser);
+            // if ($db->count) {
+            //     $this->res['msg'] = '用户更新成功';
+            // }else{
+            //     $this->res['error'] = 1;
+            //     $this->res['msg'] = '用户更新失败';
+            // }
         }else{
             $this->res['error'] = 1;
-            $this->res['msg'] = '用户不存在 ';
+            $this->res['msg'] = '用户不存在';
         }
 
         return $this->res;
