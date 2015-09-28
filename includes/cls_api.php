@@ -356,6 +356,7 @@ class api {
                 'avatarurl' => $aUsers[0]['avatar_url'],
                 );
             $this->res['data'] = $aRes;
+            $this->res['msg'] = '登陆成功';
             // $aUpdateUser = array();
             // $aUpdateUser['password'] = $password;
             // $db->where ('user_id', $aRes['userid']);
