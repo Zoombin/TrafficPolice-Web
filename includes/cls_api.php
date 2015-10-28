@@ -794,7 +794,7 @@ class api {
         global $db;
         $userid = $_REQUEST['userid'];
         
-        $sql = "SELECT * FROM `mark_trafficpolice` WHERE user_id = '$userid' ORDER BY created_date DESC";
+        $sql = "SELECT mt.*,u.nickname AS pusher,IFNULL(SUM(reward.pay_money),0) AS total_reward FROM `mark_trafficpolice` mt LEFT JOIN users u ON mt.user_id=u.user_id LEFT JOIN `mark_trafficpolice_received` mtr ON mtr.mt_id=mt.id LEFT JOIN mark_trafficpolice_reward reward ON reward.mtr_id = mtr.id WHERE mt.user_id = '$userid' GROUP BY mt.id ORDER BY created_date DESC";
         $aList = $db->withTotalCount()->rawQuery($sql);
 
         if($db->totalCount)
@@ -816,7 +816,7 @@ class api {
         global $db;
         $userid = $_REQUEST['userid'];
 
-        $sql = "SELECT mtr.id,mtr.user_id,mt.latitude,mt.longitude,mt.image_url,mt.content,mtr.created_date,mt.address FROM `mark_trafficpolice_received` mtr LEFT JOIN mark_trafficpolice mt ON mtr.mt_id=mt.id WHERE mtr.user_id='$userid' ORDER BY mtr.created_date DESC";
+        $sql = "SELECT mtr.id,mtr.user_id,mt.latitude,mt.longitude,mt.image_url,mt.content,mtr.created_date,mt.address,u.nickname AS pusher,IFNULL(SUM(reward.pay_money),0) AS total_reward FROM `mark_trafficpolice_received` mtr LEFT JOIN mark_trafficpolice mt ON mtr.mt_id=mt.id LEFT JOIN users u ON mt.user_id=u.user_id LEFT JOIN mark_trafficpolice_reward reward ON reward.mtr_id = mtr.id WHERE mtr.user_id='$userid' GROUP BY mtr.id ORDER BY mtr.created_date DESC";
 
         $aList = $db->withTotalCount()->rawQuery($sql);
 
