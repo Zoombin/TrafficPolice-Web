@@ -847,6 +847,8 @@ class api {
         $id = $db->insert ('mark_trafficpolice_like', $aNew);
         if ($id) {
             $this->res['msg'] = '操作成功';
+            $sql = "UPDATE mark_trafficpolice mt INNER JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id SET mt.is_unread=1 WHERE mtr.id=$mtr_id";
+            $db->rawQuery($sql);
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '操作失败';
@@ -872,6 +874,8 @@ class api {
         $id = $db->insert ('mark_trafficpolice_nopolice', $aNew);
         if ($id) {
             $this->res['msg'] = '操作成功';
+            $sql = "UPDATE mark_trafficpolice mt INNER JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id SET mt.is_unread=1 WHERE mtr.id=$mtr_id";
+            $db->rawQuery($sql);
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '操作失败';
@@ -900,6 +904,8 @@ class api {
         $id = $db->insert ('mark_trafficpolice_comment', $aNew);
         if ($id) {
             $this->res['msg'] = '操作成功';
+            $sql = "UPDATE mark_trafficpolice mt INNER JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id SET mt.is_unread=1 WHERE mtr.id=$mtr_id";
+            $db->rawQuery($sql);
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '操作失败';
@@ -956,6 +962,8 @@ class api {
         $id = $db->insert ('mark_trafficpolice_reward', $aNew);
         if ($id) {
             $this->res['msg'] = '操作成功';
+            $sql = "UPDATE mark_trafficpolice mt INNER JOIN mark_trafficpolice_received mtr ON mt.id=mtr.mt_id SET mt.is_unread=1 WHERE mtr.id=$mtr_id";
+            $db->rawQuery($sql);
         }else{
             $this->res['error'] = 1;
             $this->res['msg'] = '操作失败';
@@ -1221,6 +1229,10 @@ class api {
 
         $this->res['data'] = $aData;
         $this->res['total'] = $db->totalCount;
+
+        //更新信息为已读
+        $sql = "UPDATE mark_trafficpolice mt SET mt.is_unread=0 WHERE mt.id=$mt_id";
+        $db->rawQuery($sql);
 
         return $this->res;
     }
