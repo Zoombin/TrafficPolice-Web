@@ -55,6 +55,8 @@ function ios($alert, $sound=null, $badge=null, $contentAvailable=null, $extras=n
         $payload['sound'] = '';
     }
 
+    $payload['sound'] = '';
+
     if (!is_null($badge)) {
         if (is_string($badge) && !preg_match("/^[+-]{1}[0-9]{1,3}$/", $badge)) {
             if (!is_int($badge)) {
