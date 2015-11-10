@@ -666,7 +666,8 @@ class api {
         //获得附近停车用户
         $aUsers = $this->_getNearbyUsers($long, $lat);
         
-        $sPushMsg = '您当前' . $this->searchRadius . '千米的范围内有交警，请注意！';
+       // $sPushMsg = '您当前' . $this->searchRadius . '千米的范围内有交警，请注意！';
+        $sPushMsg = '您当前' . $this->searchRadius*1000 . '米的范围内有交警，请注意！';
         if(count($aUsers)){
             $sMsgType = 'markPolice';
             //去除重复用户
