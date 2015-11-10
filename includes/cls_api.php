@@ -687,7 +687,8 @@ class api {
                 $client = new JPushClient($this->appKey, $this->masterSecret);
                 $response = $client->push()->setPlatform(M\all)
                     ->setAudience(M\audience(M\alias($aPushAlias)))
-                    ->setNotification(M\notification($sPushMsg))
+                   // ->setNotification(M\notification($sPushMsg))
+                   ->setNotification(M\notification('hi',M\android($sPushMsg), M\ios($sPushMsg,'sound.caf',1,null,null,null)))
                     ->setOptions(M\options($id, 0, null, true))
                     ->send();
                 // $aPusRes = $this->_objectToArray($response);
